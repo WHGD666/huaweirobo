@@ -26,6 +26,16 @@ bash scripts/bootstrap.sh
 bash scripts/verify_env.sh --report "$JUESAI_EXTERNAL_ROOT/environment-report.txt"
 ```
 
+如果 `verify_env.sh` 报告 Torch CUDA 驱动不兼容，先依据华为官方 A1Z 页面提供的旧驱动示例使用官方 cu118 index，再重跑安装：
+
+```bash
+export TORCH_INDEX_URL="https://download.pytorch.org/whl/cu118"
+bash scripts/bootstrap.sh
+bash scripts/verify_env.sh
+```
+
+不根据显卡型号自行猜测 CUDA/Torch 组合；只有出现实际驱动兼容性证据时才使用这个官方覆盖项。
+
 若已有环境或外部 checkout 被手动修改，脚本不会强行覆盖，而是停止并要求人工处理。脚本使用固定版本和 SHA256；不要通过修改脚本来绕过来源审计。
 
 ## r2c SDK 人工步骤

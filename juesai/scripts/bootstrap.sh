@@ -15,6 +15,7 @@ A1Z_COMMIT="e931ecd0e25ad35df251097ba42921b3d2fa7224"
 TELEOP_URL="https://github.com/suhanwu/a1z-teleop.git"
 TELEOP_BRANCH="main"
 TELEOP_COMMIT="c3275a32951a52f4a7d9e7d9976eb687652526ba"
+TORCH_INDEX_URL="${TORCH_INDEX_URL:-}"
 MANUAL_STEP_REQUIRED=0
 
 log() { printf '[bootstrap] %s\n' "$*"; }
@@ -120,7 +121,11 @@ main() {
   fi
   conda install -y -n "$ENV_NAME" -c conda-forge ffmpeg
   conda activate "$ENV_NAME"
-  python -m pip install --upgrade "lerobot==0.6.1"
+  if [[ -n "$TORCH_INDEX_URL" ]]; then
+    log "install official PyTorch override from $TORCH_INDEX_URL"
+    python -m pip install "torch>=2.7,<2.12" "torchvision>=0.22,<0.27" --index-url "$TORCH_INDEX_URL"
+  fi
+  python -m pip install "lerobot==0.6.1"
 
   local a1z_dir="$EXTERNAL_ROOT/GALAXEA-A1Z"
   local teleop_dir="$EXTERNAL_ROOT/a1z-teleop"

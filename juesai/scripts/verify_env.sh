@@ -84,6 +84,13 @@ if (( ENV_READY == 1 )); then
   lerobot_version="$(run_env python -c 'import importlib.metadata as m; print(m.version("lerobot"))' 2>&1 || true)"
   [[ "$lerobot_version" == 0.6.1 ]] && pass "LeRobot version: $lerobot_version" || fail "LeRobot version mismatch: $lerobot_version"
   run_env ffmpeg -version >/dev/null 2>&1 && pass 'ffmpeg available in environment' || fail 'ffmpeg unavailable in environment'
+  torch_report="$(run_env python -c 'import torch; print(torch.__version__); print(torch.version.cuda)' 2>&1 || true)"
+  [[ -n "$torch_report" ]] && pass "Torch/CUDA build:\n$torch_report" || fail 'Torch import failed'
+  if run_env python -c 'import torch; raise SystemExit(0 if torch.cuda.is_available() else 1)' >/dev/null 2>&1; then
+    pass 'Torch CUDA runtime is available'
+  else
+    warn 'Torch CUDA runtime is unavailable; inspect driver compatibility and use the official TORCH_INDEX_URL override if needed'
+  fi
   for module in lerobot a1z fashionstar_uart_sdk; do
     if run_env python -c "import $module" >/dev/null 2>&1; then pass "Python import: $module"; else warn "Python import unavailable: $module"; fi
   done
