@@ -1,22 +1,75 @@
-# Phase 1 来源清单
+# 决赛 A1Z 来源与命令映射
 
-以下来源用于本阶段的环境和代码审计。日期以本次审计为准（2026-09-08）。
+审计日期：2026-09-08。来源优先级严格遵循：A1Z 专用华为文档 > CloudRobo 通用环境文档 > 指定代码仓库。
 
-## 华为云官方文档
+## 1. 华为 A1Z 专用文档（最高优先级）
 
-- [A1Z 当前官方 SDK 页面](https://support.huaweicloud.com/sdkreference-cloudrobo/zh-cn_topic_0000002713194086.html)：当前规范，页面更新时间 2026-09-04；要求 Ubuntu 22.04/24.04、Python 3.12、LeRobot 0.6.1，并说明 A1Z、a1z-teleop 与 r2c SDK 的安装方式。
-- [用户提供的 A1Z 页面旧地址](https://support.huaweicloud.com/sdkreference-cloudrobo/cloudrobo_03_0042.html)：本次访问已返回 404，已用上面的当前官方页面替代，不猜测旧页面内容。
-- [连接机器人](https://support.huaweicloud.com/sdkreference-cloudrobo/cloudrobo_03_0003.html)：CloudRobo 控制台建机器人、下载凭据和连接流程。
-- [配置软件环境](https://support.huaweicloud.com/sdkreference-cloudrobo/cloudrobo_03_0002.html)：CloudRobo SDK 包从控制台获取；其中旧的通用 LeRobot 0.5.1 说明不作为 A1Z 当前版本依据。
+- 来源：华为云 CloudRobo SDK 参考，“星海图 A1Z”。
+- URL：<https://support.huaweicloud.com/sdkreference-cloudrobo/cloudrobo_03_0042.html>
+- 页面更新时间：2026-09-07 GMT+08:00。
+- 使用版本：Ubuntu 22.04/24.04、内核 `>=6.8.0-124`、Python 3.12、conda 环境 `lerobot061`、LeRobot 0.6.1、conda-forge ffmpeg、A1Z `gripper` 分支、最新 hw-r2c-sdk。
+- 使用命令：Miniforge LatestRelease 下载；`conda create -y -n lerobot061 python=3.12`；`conda install ffmpeg -c conda-forge`；`pip install lerobot==0.6.1`；`A1Z_SDK=... bash setup.sh`；现场 SocketCAN/CAN/标定步骤。
+- 对应文件：`A1Z_ENV_AUDIT.md`、`A1Z_DOWNLOAD_CHECKLIST.md`、`A1Z_INSTALL_GUIDE.md`、`scripts/install_a1z_official.sh`、`scripts/verify_env.sh`。
 
-## 代码与发行包
+## 2. CloudRobo 通用环境文档（仅作补充）
 
-- [GALAXEA-A1Z](https://github.com/userguide-galaxea/GALAXEA-A1Z/tree/gripper)，`gripper` 分支固定 commit：`e931ecd0e25ad35df251097ba42921b3d2fa7224`。
-- [a1z-teleop](https://github.com/suhanwu/a1z-teleop)，`main` 分支固定 commit：`c3275a32951a52f4a7d9e7d9976eb687652526ba`。Huawei 页面里的 teleop 地址是占位符，因此本项目使用用户明确提供的仓库地址。
-- [Star-Arm-102](https://github.com/servodevelop/Star-Arm-102)，审计 commit：`0896306e40891c3ee4c97228e85dd708d61326de`。仅作参考，不作为 bootstrap 的自动依赖。
-- [LeRobot 0.6.1 PyPI](https://pypi.org/project/lerobot/0.6.1/)：要求 Python `>=3.12`；本审计记录 wheel SHA256：`1894516040c65f80a45bd9741f8174aae90ed5d93da0627ab4f1a85fd8d75e90`。
-- [Miniforge 官方 releases](https://github.com/conda-forge/miniforge/releases)：本脚本固定 Linux x86_64 版本 `26.5.3-0`，安装器 SHA256：`14db468222ad564658656f769506056209b6dc375f5e7dfd31eb5ebbf08fa529`。
+- 来源：华为云 CloudRobo SDK 参考，“配置软件环境”。
+- URL：<https://support.huaweicloud.com/sdkreference-cloudrobo/cloudrobo_03_0002.html>
+- 页面更新时间：2026-09-04 GMT+08:00。
+- 可用内容：Linux Miniforge 安装、conda-forge ffmpeg、CloudRobo 控制台下载 R2C SDK、解压和 `pip install -e .`。
+- 适用范围差异：该页面仍写 LeRobot 0.5.1、环境名 `lerobot`，属于旧的通用流程；A1Z 专用页面写 LeRobot 0.6.1、环境名 `lerobot061`。本项目使用 A1Z 专用页面的 0.6.1，不混用通用页的 0.5.1 命令。
+- 对应文件：`A1Z_DOWNLOAD_CHECKLIST.md`、`A1Z_INSTALL_GUIDE.md`、`scripts/install_a1z_official.sh`。
 
-## 重要边界
+## 3. GALAXEA-A1Z SDK
 
-第三方仓库的本地副本、r2c SDK 压缩包、数据集、checkpoint 和凭据不是本仓库来源，也不应提交。r2c SDK 没有被猜测为 GitHub 依赖，必须以 CloudRobo 控制台提供的官方包为准。
+- 来源：[userguide-galaxea/GALAXEA-A1Z](https://github.com/userguide-galaxea/GALAXEA-A1Z/tree/gripper)。
+- 版本依据：分支 `gripper`；运行时通过 `git rev-parse HEAD` 记录实际 SHA，不在本项目擅自固化未由当前官方页面要求的未来 commit。
+- 使用命令：`git clone --branch gripper --single-branch ...`；`python -m pip install -e .`；`git branch --show-current`；`git rev-parse HEAD`。
+- 对应文件：`A1Z_DOWNLOAD_CHECKLIST.md`、`A1Z_INSTALL_GUIDE.md`、`scripts/install_a1z_official.sh`、`scripts/verify_env.sh`。
+
+## 4. a1z-teleop
+
+- 来源：[suhanwu/a1z-teleop](https://github.com/suhanwu/a1z-teleop)。
+- 版本依据：`main` 分支的实际 HEAD；运行时通过 `git rev-parse HEAD` 记录 SHA。
+- 关键实现：[setup.sh](https://raw.githubusercontent.com/suhanwu/a1z-teleop/main/setup.sh) 明确使用 `lerobot061`、LeRobot 0.6.x、`A1Z_SDK`、两个 pip 插件，并调用 `scripts/verify_install.py`。[verify_install.py](https://raw.githubusercontent.com/suhanwu/a1z-teleop/main/scripts/verify_install.py) 检查 SDK 导入、ChoiceRegistry 注册和 CLI 配置实例化路径。
+- 使用命令：`git clone ...`；`A1Z_SDK=... bash setup.sh`；`python scripts/verify_install.py`；`git rev-parse HEAD`。
+- 对应文件：`A1Z_DOWNLOAD_CHECKLIST.md`、`A1Z_INSTALL_GUIDE.md`、`scripts/install_a1z_official.sh`、`scripts/verify_env.sh`。
+
+## 5. Star-Arm-102
+
+- 来源：[servodevelop/Star-Arm-102](https://github.com/servodevelop/Star-Arm-102)。
+- 用途：主臂硬件、UART 伺服和遥操作资料参考。
+- 安装判断：当前不单独安装。`a1z-teleop` 自带 `plugins/teleoperator-stararm102`，并由其 `setup.sh` 安装该插件和 `fashionstar_uart_sdk`；因此 Star-Arm-102 不作为自动安装依赖。
+- 对应文件：`A1Z_DOWNLOAD_CHECKLIST.md`、`A1Z_INSTALL_GUIDE.md`、本文件。
+
+## 6. LeRobot 与 Torch
+
+- LeRobot 来源：A1Z 专用华为文档；版本 `0.6.1`；命令 `python -m pip install lerobot==0.6.1`；验证 `import lerobot` 和版本输出；对应三个 A1Z 文档和两个脚本。
+- 通用页的 `0.5.1`：仅记录为适用范围差异，不进入本项目安装脚本。
+- Torch：A1Z 专用页面说明随 LeRobot PyPI Linux wheel 安装的 CUDA 12.x 版 Torch；本项目不另外指定 Torch 版本，不设置 `TORCH_INDEX_URL`，不自动改变 CUDA/Driver。
+- GPU：VMware 无 GPU 时脚本输出 `SKIP`，不触发任何替换逻辑。
+
+## 7. Miniforge 与 ffmpeg
+
+- Miniforge 来源：A1Z 专用文档的 Linux LatestRelease URL；非交互 `-b -p` 参数来自 [Miniforge 官方说明](https://github.com/conda-forge/miniforge#unix-like-platforms-macos-linux--wsl)。不固定旧发行版 SHA。
+- 命令：`wget "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh"`；`bash ... -b -p "$HOME/miniforge3"`。
+- ffmpeg 来源：通用 CloudRobo 文档；命令 `conda install -n lerobot061 -c conda-forge ffmpeg`。
+- 对应文件：两个 A1Z 文档、两个脚本。
+
+## 8. hw-r2c-sdk
+
+- 来源：CloudRobo 控制台“运行管理 > 机器人 > R2C SDK 软件包”，配合华为官方环境文档。
+- 版本：最新官方包；不固定通用文档中的示例版本，不记录猜测 URL。
+- 命令：用户下载后执行 `tar -zxvf hw_r2c_sdk-<官方版本>.tar.gz`、进入实际 `r2c_sdk_python` 目录、`python -m pip install -e .`、`import r2c_sdk` 验证。
+- 脚本行为：只有显式提供 `R2C_SDK_PATH` 才安装；否则输出 `MANUAL STEP REQUIRED`。
+- 对应文件：`A1Z_DOWNLOAD_CHECKLIST.md`、`A1Z_INSTALL_GUIDE.md`、`scripts/install_a1z_official.sh`、`scripts/verify_env.sh`。
+
+## 9. 真机步骤来源
+
+- SocketCAN/gs_usb：A1Z SDK README 与 A1Z 专用文档；包括 HHS Pro-II VID/PID `a8fa:8598`、`gs_usb`、1 Mbps 配置。
+- Camera：A1Z 专用文档；使用 UVC 设备检查，通道名需与训练数据的 `cam_wrist`、`cam_external` 一致。
+- Calibration：A1Z 专用文档和 a1z-teleop 流程；首次使用现场交互完成。所有真机命令只写在 `A1Z_DOWNLOAD_CHECKLIST.md` 的现场章节，不进入普通安装脚本。
+
+## 10. 历史 P4 资料
+
+旧 P4 实验中的 `cu118`、`TORCH_INDEX_URL`、Driver 550 和 P4 profile 仅作为历史背景记录，不是本标准环境的来源、版本或默认命令。新安装脚本不读取、不设置这些内容。

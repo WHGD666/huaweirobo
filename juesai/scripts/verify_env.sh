@@ -1,126 +1,190 @@
 #!/usr/bin/env bash
-set -Eeuo pipefail
+set -euo pipefail
 
-SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_DIR="$(cd -- "$SCRIPT_DIR/.." && pwd)"
-ENV_NAME="${JUESAI_ENV_NAME:-lerobot061}"
-MINIFORGE_DIR="${MINIFORGE_DIR:-$HOME/miniforge3}"
-EXTERNAL_ROOT="${JUESAI_EXTERNAL_ROOT:-$HOME/juesai.external}"
-A1Z_COMMIT="e931ecd0e25ad35df251097ba42921b3d2fa7224"
-TELEOP_COMMIT="c3275a32951a52f4a7d9e7d9976eb687652526ba"
-FAILURES=0
-WARNINGS=0
+# Read-only verification for the A1Z software environment. No hardware,
+# network, package manager, or source checkout operation is performed here.
+
+readonly ENV_NAME="${JUESAI_ENV_NAME:-lerobot061}"
+readonly MINIFORGE_DIR="${MINIFORGE_DIR:-$HOME/miniforge3}"
+readonly WORKSPACE="${A1Z_WORKSPACE:-$HOME/a1z-workspace}"
+readonly MIN_KERNEL="6.8.0-124"
+
+failures=0
+manual_steps=0
 
 pass() { printf '[PASS] %s\n' "$*"; }
-warn() { WARNINGS=$((WARNINGS + 1)); printf '[WARN] %s\n' "$*"; }
-fail() { FAILURES=$((FAILURES + 1)); printf '[FAIL] %s\n' "$*"; }
-manual() { WARNINGS=$((WARNINGS + 1)); printf '[MANUAL STEP REQUIRED] %s\n' "$*"; }
+warn() { printf '[WARN] %s\n' "$*"; }
+fail() { failures=$((failures + 1)); printf '[FAIL] %s\n' "$*"; }
+skip() { printf '[SKIP] %s\n' "$*"; }
+manual() { manual_steps=$((manual_steps + 1)); printf '[MANUAL STEP REQUIRED] %s\n' "$*"; }
 
-if [[ "${1:-}" == --report ]]; then
-  [[ -n "${2:-}" ]] || { printf -- '--report 需要路径\n' >&2; exit 2; }
-  mkdir -p "$(dirname -- "$2")"
-  exec > >(tee "$2") 2>&1
-  shift 2
-fi
-[[ "$#" -eq 0 ]] || { printf '用法: bash scripts/verify_env.sh [--report PATH]\n' >&2; exit 2; }
+version_ge() {
+  [[ "$(printf '%s\n%s\n' "$1" "$2" | sort -V | head -n1)" == "$1" ]]
+}
 
-printf '=== juesai Phase 1 environment verification ===\n'
-printf 'time: %s\n' "$(date -Is)"
-printf 'project: %s\n' "$PROJECT_DIR"
+run_env() {
+  conda run --no-capture-output -n "$ENV_NAME" "$@"
+}
 
-if [[ -r /etc/os-release ]]; then
+check_os() {
+  if [[ ! -r /etc/os-release ]]; then
+    fail '无法读取 /etc/os-release'
+    return
+  fi
   # shellcheck disable=SC1091
   source /etc/os-release
-  [[ "${ID:-}" == ubuntu ]] && pass "OS Ubuntu ${VERSION_ID}" || fail "OS is not Ubuntu: ${ID:-unknown}"
-  [[ "${VERSION_ID:-}" == 22.04 || "${VERSION_ID:-}" == 24.04 ]] && pass "Ubuntu version supported: ${VERSION_ID}" || fail "unsupported Ubuntu version: ${VERSION_ID:-unknown}"
-else
-  fail 'cannot read /etc/os-release'
-fi
+  [[ "${ID:-}" == ubuntu ]] && pass "Ubuntu ${VERSION_ID}" || fail "OS is not Ubuntu: ${ID:-unknown}"
+  case "${VERSION_ID:-}" in
+    22.04|24.04) pass "Ubuntu version supported: ${VERSION_ID}" ;;
+    *) fail "unsupported Ubuntu version: ${VERSION_ID:-unknown}" ;;
+  esac
+}
 
-kernel_release="$(uname -r)"
-kernel_version="${kernel_release%%-*}"
-IFS=. read -r kernel_major kernel_minor _ <<< "$kernel_version"
-kernel_major="${kernel_major:-0}"
-kernel_minor="${kernel_minor:-0}"
-if (( kernel_major < 6 || (kernel_major == 6 && kernel_minor < 8) )); then
-  warn "kernel ${kernel_release} is below the official 6.8 SocketCAN baseline; real A1Z CAN use is not verified"
-else
-  pass "kernel ${kernel_release} meets the 6.8 SocketCAN baseline"
-fi
-if command -v nvidia-smi >/dev/null 2>&1; then
-  nvidia-smi --query-gpu=name,driver_version,memory.total --format=csv,noheader && pass 'nvidia-smi query succeeded' || warn 'nvidia-smi exists but query failed'
-else
-  warn 'nvidia-smi unavailable; GPU status is not verified'
-fi
-
-if command -v conda >/dev/null 2>&1; then
-  CONDA_BIN="$(command -v conda)"
-elif [[ -x "$MINIFORGE_DIR/bin/conda" ]]; then
-  CONDA_BIN="$MINIFORGE_DIR/bin/conda"
-else
-  fail 'conda/Miniforge not found'
-  CONDA_BIN=''
-fi
-
-ENV_READY=0
-if [[ -n "$CONDA_BIN" ]]; then
-  CONDA_BASE="$($CONDA_BIN info --base 2>/dev/null || true)"
-  if [[ -n "$CONDA_BASE" && -f "$CONDA_BASE/etc/profile.d/conda.sh" ]]; then
-    # shellcheck disable=SC1090
-    source "$CONDA_BASE/etc/profile.d/conda.sh"
-  fi
-  if conda env list | awk '{print $1}' | grep -Fxq "$ENV_NAME"; then
-    pass "conda env exists: $ENV_NAME"
-    py_version="$(conda run --no-capture-output -n "$ENV_NAME" python --version 2>&1 || true)"
-    [[ "$py_version" == Python\ 3.12.* ]] && pass "environment Python: $py_version" || fail "environment Python is not 3.12: $py_version"
-    ENV_READY=1
+check_kernel() {
+  local current
+  current="$(uname -r)"
+  if version_ge "$MIN_KERNEL" "$current"; then
+    pass "kernel $current meets >= $MIN_KERNEL"
   else
-    fail "conda env missing: $ENV_NAME"
+    fail "kernel $current is below >= $MIN_KERNEL"
   fi
-fi
+}
 
-run_env() { conda run --no-capture-output -n "$ENV_NAME" "$@"; }
-if (( ENV_READY == 1 )); then
+find_conda() {
+  if [[ -x "$MINIFORGE_DIR/bin/conda" ]]; then
+    printf '%s\n' "$MINIFORGE_DIR/bin/conda"
+  elif command -v conda >/dev/null 2>&1; then
+    command -v conda
+  else
+    printf '%s\n' ''
+  fi
+}
+
+check_conda_and_environment() {
+  local conda_bin="$1"
+  if [[ -z "$conda_bin" ]]; then
+    fail 'Miniforge/conda not found'
+    return 1
+  fi
+  pass "conda executable: $conda_bin"
+  local base
+  base="$($conda_bin info --base 2>/dev/null || true)"
+  [[ -n "$base" ]] && pass "conda base: $base" || fail 'conda info --base failed'
+  if [[ -z "$base" || ! -f "$base/etc/profile.d/conda.sh" ]]; then
+    fail 'conda shell integration not found'
+    return 1
+  fi
+  # shellcheck disable=SC1090
+  source "$base/etc/profile.d/conda.sh"
+  if conda env list | awk '{print $1}' | grep -Fxq "$ENV_NAME"; then
+    pass "conda environment exists: $ENV_NAME"
+  else
+    fail "conda environment missing: $ENV_NAME"
+    return 1
+  fi
+  local python_version
+  python_version="$(run_env python --version 2>&1 || true)"
+  [[ "$python_version" == Python\ 3.12.* ]] && pass "environment Python: $python_version" || fail "environment Python is not 3.12: $python_version"
+  return 0
+}
+
+check_python_packages() {
+  local lerobot_version
   lerobot_version="$(run_env python -c 'import importlib.metadata as m; print(m.version("lerobot"))' 2>&1 || true)"
   [[ "$lerobot_version" == 0.6.1 ]] && pass "LeRobot version: $lerobot_version" || fail "LeRobot version mismatch: $lerobot_version"
-  run_env ffmpeg -version >/dev/null 2>&1 && pass 'ffmpeg available in environment' || fail 'ffmpeg unavailable in environment'
-  torch_report="$(run_env python -c 'import torch; print(torch.__version__); print(torch.version.cuda)' 2>&1 || true)"
-  [[ -n "$torch_report" ]] && pass "Torch/CUDA build:\n$torch_report" || fail 'Torch import failed'
-  if run_env python -c 'import torch; raise SystemExit(0 if torch.cuda.is_available() else 1)' >/dev/null 2>&1; then
-    pass 'Torch CUDA runtime is available'
-  else
-    warn 'Torch CUDA runtime is unavailable; inspect driver compatibility and use the official TORCH_INDEX_URL override if needed'
-  fi
-  for module in lerobot a1z fashionstar_uart_sdk; do
-    if run_env python -c "import $module" >/dev/null 2>&1; then pass "Python import: $module"; else warn "Python import unavailable: $module"; fi
-  done
-  if run_env python -c 'import r2c_sdk' >/dev/null 2>&1; then
-    pass 'Python import: r2c_sdk'
-  else
-    manual 'r2c_sdk 未安装；从 CloudRobo 控制台获取官方包，设置 R2C_SDK_PATH 后重新运行 bootstrap.sh。'
-  fi
-fi
-
-check_repo() {
-  local label="$1" dir="$2" expected="$3"
-  if [[ ! -d "$dir/.git" ]]; then warn "$label checkout missing: $dir"; return; fi
-  local actual
-  actual="$(git -C "$dir" rev-parse HEAD 2>/dev/null || true)"
-  [[ "$actual" == "$expected" ]] && pass "$label commit: $actual" || fail "$label commit mismatch: $actual (expected $expected)"
+  if run_env ffmpeg -version >/dev/null 2>&1; then pass 'ffmpeg available'; else fail 'ffmpeg unavailable'; fi
+  if run_env python -c 'import lerobot' >/dev/null 2>&1; then pass 'import lerobot'; else fail 'import lerobot failed'; fi
+  if run_env python -c 'import a1z' >/dev/null 2>&1; then pass 'import a1z'; else fail 'import a1z failed'; fi
 }
-check_repo 'GALAXEA-A1Z' "$EXTERNAL_ROOT/GALAXEA-A1Z" "$A1Z_COMMIT"
-check_repo 'a1z-teleop' "$EXTERNAL_ROOT/a1z-teleop" "$TELEOP_COMMIT"
 
-if (( ENV_READY == 1 )) && [[ -f "$EXTERNAL_ROOT/a1z-teleop/scripts/verify_install.py" ]]; then
-  if run_env python "$EXTERNAL_ROOT/a1z-teleop/scripts/verify_install.py"; then
-    pass 'a1z-teleop official software verification script'
-  else
-    fail 'a1z-teleop official software verification script failed'
+check_git_repo() {
+  local label="$1" directory="$2" expected_branch="$3"
+  if [[ ! -d "$directory/.git" ]]; then
+    fail "$label checkout missing: $directory"
+    return 1
   fi
-else
-  warn 'a1z-teleop verify_install.py unavailable; software plugin registration not checked'
-fi
+  local branch sha
+  branch="$(git -C "$directory" branch --show-current)"
+  sha="$(git -C "$directory" rev-parse HEAD)"
+  [[ "$branch" == "$expected_branch" ]] && pass "$label branch: $branch" || fail "$label branch '$branch', expected '$expected_branch'"
+  [[ "$sha" =~ ^[0-9a-f]{40}$ ]] && pass "$label commit SHA: $sha" || fail "$label commit SHA is invalid: $sha"
+  return 0
+}
 
-warn 'hardware checks intentionally skipped: no CAN init, scan, robot connect, calibration, camera, teleop or data collection was executed'
-printf '=== result: %d failure(s), %d warning(s) ===\n' "$FAILURES" "$WARNINGS"
-(( FAILURES == 0 ))
+check_plugin_registration() {
+  local result
+  result="$(run_env python -c '
+from lerobot.utils.import_utils import register_third_party_plugins
+from lerobot.teleoperators.config import TeleoperatorConfig
+from lerobot.robots.config import RobotConfig
+import lerobot_teleoperator_stararm102
+import lerobot_robot_galaxea_a1z
+register_third_party_plugins()
+assert "stararm102_leader" in TeleoperatorConfig.get_known_choices()
+assert "galaxea_a1z_follower" in RobotConfig.get_known_choices()
+print("stararm102_leader, galaxea_a1z_follower")
+' 2>&1 || true)"
+  if [[ "$result" == *stararm102_leader* && "$result" == *galaxea_a1z_follower* ]]; then
+    pass "plugin registration: $result"
+  else
+    fail "plugin registration failed: $result"
+  fi
+  if [[ -f "$WORKSPACE/a1z-teleop/scripts/verify_install.py" ]]; then
+    pass 'a1z-teleop verify_install.py present (not auto-executed by this read-only check)'
+  else
+    fail 'a1z-teleop verify_install.py missing'
+  fi
+}
+
+check_r2c() {
+  local version
+  version="$(run_env python -c 'import r2c_sdk; print(getattr(r2c_sdk, "__version__", "unknown"))' 2>&1 || true)"
+  if [[ -n "$version" && "$version" != *No\ module\ named* ]]; then
+    pass "r2c_sdk import/version: $version"
+  else
+    manual 'r2c_sdk 未安装或不可导入；从 CloudRobo 控制台下载最新官方包并通过 R2C_SDK_PATH 安装'
+  fi
+}
+
+check_torch() {
+  local report
+  report="$(run_env python -c 'import torch; print(torch.__version__); print(torch.version.cuda)' 2>&1 || true)"
+  if [[ -n "$report" && "$report" != *No\ module\ named* ]]; then
+    pass "Torch import/version/CUDA build: $report"
+    if run_env python -c 'import torch; raise SystemExit(0 if torch.cuda.is_available() else 1)' >/dev/null 2>&1; then
+      pass 'Torch CUDA runtime available'
+    else
+      skip 'GPU/CUDA runtime unavailable in VMware VM; no Torch/CUDA change is attempted'
+    fi
+  else
+    fail "Torch import failed: $report"
+  fi
+}
+
+main() {
+  printf '=== juesai A1Z read-only environment verification ===\n'
+  printf 'time: %s\n' "$(date -Is)"
+  check_os
+  check_kernel
+  local conda_bin
+  conda_bin="$(find_conda)"
+  if check_conda_and_environment "$conda_bin"; then
+    check_python_packages
+    check_plugin_registration
+    check_r2c
+    check_torch
+  else
+    skip 'Python packages, plugins, r2c_sdk and Torch checks skipped because lerobot061 is unavailable'
+  fi
+
+  check_git_repo 'GALAXEA-A1Z' "$WORKSPACE/GALAXEA-A1Z" gripper || true
+  check_git_repo 'a1z-teleop' "$WORKSPACE/a1z-teleop" main || true
+  skip 'CAN/SocketCAN/gs_usb checks skipped: no hardware command is executed'
+  skip 'A1Z/gripper checks skipped: no robot connection or motion is executed'
+  skip 'Star-Arm checks skipped: no UART or real hardware command is executed'
+  skip 'Camera checks skipped: no camera enumeration is executed'
+  printf '=== result: %d failure(s), %d manual step(s) ===\n' "$failures" "$manual_steps"
+  (( failures == 0 ))
+}
+
+main "$@"
