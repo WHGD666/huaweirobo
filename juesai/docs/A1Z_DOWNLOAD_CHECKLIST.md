@@ -76,6 +76,27 @@ git log -1 --format='%H %s'
 
 预期：当前分支为 `gripper`；将 `git rev-parse HEAD` 输出记录到 VM 外部的版本记录中。不要在没有来源依据时把未来仓库 HEAD 擅自替换成其他 SHA。
 
+### 官方条件性故障处理：编译失败时
+
+如果 A1Z SDK 或相关 Python 包在安装/编译阶段报告缺少构建工具或 FFmpeg 开发库，才执行以下官方补依赖命令；正常安装时不默认执行：
+
+```bash
+sudo apt-get install \
+  cmake \
+  build-essential \
+  python3-dev \
+  pkg-config \
+  libavformat-dev \
+  libavcodec-dev \
+  libavdevice-dev \
+  libavutil-dev \
+  libswscale-dev \
+  libswresample-dev \
+  libavfilter-dev
+```
+
+来源：华为 A1Z 专用文档的“编译失败补充依赖”说明。该命令只在编译报错时由用户人工执行，不进入默认安装脚本。
+
 ## 6. a1z-teleop
 
 来源：[比赛指定仓库 suhanwu/a1z-teleop](https://github.com/suhanwu/a1z-teleop)。仓库 README 和 `setup.sh` 都以 LeRobot 0.6.1、`lerobot061` 为前提。
@@ -130,12 +151,33 @@ python -c "import r2c_sdk; print(getattr(r2c_sdk, '__version__', 'unknown'))"
 
 来源：A1Z SDK README 和华为 A1Z 专用文档。
 
+#### 官方首选主路径
+
+A1Z 专章优先使用 `a1z-teleop` 提供的配置脚本。该脚本负责加载 `gs_usb`、绑定 HHS 适配器、寻找实际 CAN 接口并按 1 Mbps 启动；接口名称不保证是 `can0`。
+
+```bash
+cd "$HOME/a1z-workspace/a1z-teleop"
+sudo bash setup_follower_can.sh
+```
+
+读取脚本输出的实际接口名后，再执行：
+
+```bash
+ip -d link show <实际CAN接口>
+python scripts/scan_can_ids.py <实际CAN接口>
+candump <实际CAN接口>
+```
+
+#### 故障排查 / 实现说明（不是现场首选路径）
+
+仅在官方主脚本无法使用、且已按现场安全流程确认硬件后，才参考以下底层排查命令；接口仍使用实际名称，不写死 `can0`：
+
 ```bash
 sudo modprobe gs_usb
 sudo sh -c 'echo "a8fa 8598" > /sys/bus/usb/drivers/gs_usb/new_id' 2>/dev/null || true
 ip link show type can
-sudo ip link set can0 type can bitrate 1000000
-sudo ip link set can0 up
+sudo ip link set <实际CAN接口> type can bitrate 1000000
+sudo ip link set <实际CAN接口> up
 ```
 
 ### Camera
@@ -156,7 +198,7 @@ v4l2-ctl --list-devices
 conda activate lerobot061
 lerobot-calibrate \
   --robot.type=galaxea_a1z_follower \
-  --robot.can_channel=can0 \
+  --robot.can_channel=<实际CAN接口> \
   --robot.id=follower_a1z
 ```
 

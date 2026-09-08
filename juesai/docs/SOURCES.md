@@ -2,6 +2,8 @@
 
 审计日期：2026-09-08。来源优先级严格遵循：A1Z 专用华为文档 > CloudRobo 通用环境文档 > 指定代码仓库。
 
+硬件资源说明补充使用华为 CloudRobo SDK 参考中的“接入机器人/准备硬件设备”要求：CPU 6 核以上（推荐 8 核）、内存 16GB 以上（推荐 32GB）、硬盘 1TB 以上（推荐 NVMe/SSD）、USB 至少 4 个；本机推理时显卡显存要求 8GB 以上。该要求用于正式上位机审计，不改变当前 100GB VMware Phase 1 预演定位。
+
 ## 1. 华为 A1Z 专用文档（最高优先级）
 
 - 来源：华为云 CloudRobo SDK 参考，“星海图 A1Z”。
@@ -64,12 +66,19 @@
 - 脚本行为：只有显式提供 `R2C_SDK_PATH` 才安装；否则输出 `MANUAL STEP REQUIRED`。
 - 对应文件：`A1Z_DOWNLOAD_CHECKLIST.md`、`A1Z_INSTALL_GUIDE.md`、`scripts/install_a1z_official.sh`、`scripts/verify_env.sh`。
 
-## 9. 真机步骤来源
+## 9. CloudRobo 上位机硬件要求
 
-- SocketCAN/gs_usb：A1Z SDK README 与 A1Z 专用文档；包括 HHS Pro-II VID/PID `a8fa:8598`、`gs_usb`、1 Mbps 配置。
+- 来源：华为云 CloudRobo SDK 参考，“接入机器人”中的准备硬件设备要求。
+- URL：<https://support.huaweicloud.com/sdkreference-cloudrobo/cloudrobo_03_0003.html>
+- 使用内容：CPU、内存、硬盘、USB 和本机推理 GPU 的最低/推荐规格；对应 `A1Z_ENV_AUDIT.md`。
+
+## 10. 真机步骤来源
+
+- SocketCAN/gs_usb：A1Z SDK README 与 A1Z 专用文档；官方首选命令为 `cd ~/a1z-workspace/a1z-teleop && sudo bash setup_follower_can.sh`，然后使用脚本输出的实际 CAN 接口执行 `ip -d link show`、`scripts/scan_can_ids.py` 和 `candump`。包括 HHS Pro-II VID/PID `a8fa:8598`、`gs_usb`、1 Mbps 配置。
 - Camera：A1Z 专用文档；使用 UVC 设备检查，通道名需与训练数据的 `cam_wrist`、`cam_external` 一致。
 - Calibration：A1Z 专用文档和 a1z-teleop 流程；首次使用现场交互完成。所有真机命令只写在 `A1Z_DOWNLOAD_CHECKLIST.md` 的现场章节，不进入普通安装脚本。
+- 条件性编译补依赖：A1Z 专用文档列出的 `cmake`、`build-essential`、`python3-dev`、`pkg-config` 和 FFmpeg 开发库，仅在编译报错时执行；对应 `A1Z_DOWNLOAD_CHECKLIST.md`、`A1Z_INSTALL_GUIDE.md`。
 
-## 10. 历史 P4 资料
+## 11. 历史 P4 资料
 
 旧 P4 实验中的 `cu118`、`TORCH_INDEX_URL`、Driver 550 和 P4 profile 仅作为历史背景记录，不是本标准环境的来源、版本或默认命令。新安装脚本不读取、不设置这些内容。

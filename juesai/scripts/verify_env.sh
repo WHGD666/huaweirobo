@@ -129,20 +129,28 @@ print("stararm102_leader, galaxea_a1z_follower")
   else
     fail "plugin registration failed: $result"
   fi
+  local official_verify official_status=0
   if [[ -f "$WORKSPACE/a1z-teleop/scripts/verify_install.py" ]]; then
-    pass 'a1z-teleop verify_install.py present (not auto-executed by this read-only check)'
+    official_verify="$(cd "$WORKSPACE/a1z-teleop" && run_env python scripts/verify_install.py 2>&1)" || official_status=$?
+    if (( official_status == 0 )); then
+      pass 'a1z-teleop official verify_install.py passed'
+    else
+      fail "a1z-teleop official verify_install.py failed: $official_verify"
+    fi
   else
     fail 'a1z-teleop verify_install.py missing'
   fi
 }
 
 check_r2c() {
-  local version
-  version="$(run_env python -c 'import r2c_sdk; print(getattr(r2c_sdk, "__version__", "unknown"))' 2>&1 || true)"
-  if [[ -n "$version" && "$version" != *No\ module\ named* ]]; then
-    pass "r2c_sdk import/version: $version"
-  else
+  local report
+  report="$(run_env python -c 'import r2c_sdk; from r2c_sdk import ClientConfig, SyncRobotClient; print("version=" + getattr(r2c_sdk, "__version__", "unknown")); print("r2c_sdk_api_ok")' 2>&1 || true)"
+  if [[ "$report" == *No\ module\ named* ]]; then
     manual 'r2c_sdk 未安装或不可导入；从 CloudRobo 控制台下载最新官方包并通过 R2C_SDK_PATH 安装'
+  elif [[ "$report" == *r2c_sdk_api_ok* ]]; then
+    pass "r2c_sdk import/version/API: $report"
+  else
+    fail "r2c_sdk API verification failed: $report"
   fi
 }
 

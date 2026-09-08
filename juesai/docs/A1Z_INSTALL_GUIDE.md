@@ -144,6 +144,33 @@ python -c "from a1z.robots.get_robot import get_a1z_robot; print(get_a1z_robot._
 
 来源：[GALAXEA-A1Z gripper 分支](https://github.com/userguide-galaxea/GALAXEA-A1Z/tree/gripper)。
 
+### Step 5.1：编译失败时补充官方依赖（条件性步骤）
+
+目的：仅在 A1Z SDK 或相关 Python 包报告缺少构建工具、Python 开发头文件或 FFmpeg 开发库时，补齐官方列出的编译依赖。
+
+命令：
+
+```bash
+sudo apt-get install \
+  cmake \
+  build-essential \
+  python3-dev \
+  pkg-config \
+  libavformat-dev \
+  libavcodec-dev \
+  libavdevice-dev \
+  libavutil-dev \
+  libswscale-dev \
+  libswresample-dev \
+  libavfilter-dev
+```
+
+预期结果：缺失的编译依赖安装完成；如果没有编译错误，不执行本步骤。
+
+验证命令：重新执行上一步对应的 `python -m pip install -e .`，并确认安装错误不再报告上述依赖缺失。
+
+来源：[华为 A1Z 专用文档](https://support.huaweicloud.com/sdkreference-cloudrobo/cloudrobo_03_0042.html) 的条件性编译失败处理。该步骤不属于默认安装脚本。
+
 ### Step 6：获取 a1z-teleop 并调用官方 setup
 
 目的：安装比赛指定的主臂/从臂 LeRobot 插件及其 SDK 依赖。
@@ -194,11 +221,12 @@ python -c "import r2c_sdk; print(getattr(r2c_sdk, '__version__', 'unknown'))"
 
 以下内容不属于普通软件安装流程。必须完成硬件接线、供电、急停和工作区安全检查后，按 [A1Z_DOWNLOAD_CHECKLIST.md](A1Z_DOWNLOAD_CHECKLIST.md) 的现场章节执行：
 
-- `gs_usb`/SocketCAN 加载与 `can0` 初始化；
+- `cd "$HOME/a1z-workspace/a1z-teleop" && sudo bash setup_follower_can.sh`，按脚本输出读取实际 CAN 接口；
+- `ip -d link show <实际CAN接口>`、`python scripts/scan_can_ids.py <实际CAN接口>` 和 `candump <实际CAN接口>`；
 - A1Z CAN 扫描和通信验证；
 - Star-Arm-102 UART/udev 配置及主从联动；
 - UVC Camera 设备识别与通道映射；
 - A1Z/夹爪标定；
 - 遥操作、数据采集和 CloudRobo 真实连接。
 
-本地 VM 无 GPU 时，不需要为预演环境安装或替换 CUDA/Torch；GPU 状态由验证脚本输出 `SKIP`。
+本地 VM 无 GPU 时，不需要为预演环境安装或替换 CUDA/Torch；GPU 状态由验证脚本输出 `SKIP`。现场 CAN 的底层 `modprobe`/`ip link` 排查命令只在官方 `setup_follower_can.sh` 无法工作时参考，不能作为默认首选路径。
