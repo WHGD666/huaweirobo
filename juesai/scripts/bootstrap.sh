@@ -129,7 +129,7 @@ main() {
   conda activate "$ENV_NAME"
   if [[ -n "$TORCH_INDEX_URL" ]]; then
     log "install official PyTorch override from $TORCH_INDEX_URL"
-    python -m pip install "torch>=2.7,<2.12" "torchvision>=0.22,<0.27" --index-url "$TORCH_INDEX_URL"
+    python -m pip install --force-reinstall "torch>=2.7,<2.12" "torchvision>=0.22,<0.27" --index-url "$TORCH_INDEX_URL"
   fi
   python -m pip install "lerobot==0.6.1"
 
