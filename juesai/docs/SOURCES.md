@@ -10,7 +10,7 @@
 - URL：<https://support.huaweicloud.com/sdkreference-cloudrobo/cloudrobo_03_0042.html>
 - 页面更新时间：2026-09-07 GMT+08:00。
 - 使用版本：Ubuntu 22.04/24.04、内核 `>=6.8.0-124`、Python 3.12、conda 环境 `lerobot061`、LeRobot 0.6.1、conda-forge ffmpeg、A1Z `gripper` 分支、最新 hw-r2c-sdk。
-- 使用命令：Miniforge LatestRelease 下载；`conda create -y -n lerobot061 python=3.12`；`conda install ffmpeg -c conda-forge`；`pip install lerobot==0.6.1`；`A1Z_SDK=... bash setup.sh`；现场 SocketCAN/CAN/标定步骤。
+- 使用命令：Miniforge 清华镜像下载（失败时回退官方 GitHub LatestRelease）；`conda create -y -n lerobot061 python=3.12`；配置清华 conda-forge 后执行 `conda install -n lerobot061 ffmpeg`；配置华为云 PyPI 镜像后执行 `pip install lerobot==0.6.1`；`A1Z_SDK=... bash setup.sh`；现场 SocketCAN/CAN/标定步骤。
 - 对应文件：`A1Z_ENV_AUDIT.md`、`A1Z_DOWNLOAD_CHECKLIST.md`、`A1Z_INSTALL_GUIDE.md`、`scripts/install_a1z_official.sh`、`scripts/verify_env.sh`。
 
 ## 2. CloudRobo 通用环境文档（仅作补充）
@@ -53,9 +53,9 @@
 
 ## 7. Miniforge 与 ffmpeg
 
-- Miniforge 来源：A1Z 专用文档的 Linux LatestRelease URL；非交互 `-b -p` 参数来自 [Miniforge 官方说明](https://github.com/conda-forge/miniforge#unix-like-platforms-macos-linux--wsl)。不固定旧发行版 SHA。
-- 命令：`wget "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh"`；`bash ... -b -p "$HOME/miniforge3"`。
-- ffmpeg 来源：通用 CloudRobo 文档；命令 `conda install -n lerobot061 -c conda-forge ffmpeg`。
+- Miniforge 来源：华为 CloudRobo 配置软件环境文档明确提供的清华 Linux 镜像：`https://mirrors.tuna.tsinghua.edu.cn/github-release/conda-forge/miniforge/LatestRelease/Miniforge3-Linux-x86_64.sh`；清华镜像失败时回退到官方 GitHub LatestRelease：`https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh`；非交互 `-b -p` 参数来自 [Miniforge 官方说明](https://github.com/conda-forge/miniforge#unix-like-platforms-macos-linux--wsl)。不固定旧发行版 SHA。
+- conda 来源与命令：通用 CloudRobo 文档明确给出的清华 conda-forge 镜像 `https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge/`；执行 `conda config --add channels ...`、`conda config --set show_channel_urls yes`、可选移除 `conda-forge`、`conda clean -i`，之后执行 `conda install -n lerobot061 ffmpeg`。
+- pip 来源与命令：通用 CloudRobo 文档明确给出的华为云 PyPI 镜像 `https://repo.huaweicloud.com/repository/pypi/simple`；执行 `pip config set global.index-url ...` 和 `pip config set global.trusted-host repo.huaweicloud.com`。
 - 对应文件：两个 A1Z 文档、两个脚本。
 
 ## 8. hw-r2c-sdk

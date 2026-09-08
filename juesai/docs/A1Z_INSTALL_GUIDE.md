@@ -34,9 +34,16 @@ bash scripts/verify_env.sh
 命令：
 
 ```bash
+wget "https://mirrors.tuna.tsinghua.edu.cn/github-release/conda-forge/miniforge/LatestRelease/Miniforge3-Linux-x86_64.sh"
+bash Miniforge3-Linux-x86_64.sh -b -p "$HOME/miniforge3"
+source "$HOME/miniforge3/etc/profile.d/conda.sh"
+```
+
+若清华镜像下载失败，使用原官方 GitHub LatestRelease 地址回退：
+
+```bash
 wget "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh"
 bash Miniforge3-$(uname)-$(uname -m).sh -b -p "$HOME/miniforge3"
-source "$HOME/miniforge3/etc/profile.d/conda.sh"
 ```
 
 预期结果：`$HOME/miniforge3/bin/conda` 存在并可执行。
@@ -47,7 +54,7 @@ source "$HOME/miniforge3/etc/profile.d/conda.sh"
 "$HOME/miniforge3/bin/conda" --version
 ```
 
-来源：[华为 A1Z 专用文档](https://support.huaweicloud.com/sdkreference-cloudrobo/cloudrobo_03_0042.html)；非交互参数见 [Miniforge 官方说明](https://github.com/conda-forge/miniforge#unix-like-platforms-macos-linux--wsl)。
+来源：[华为 A1Z 专用文档](https://support.huaweicloud.com/sdkreference-cloudrobo/cloudrobo_03_0042.html)；清华镜像和配置命令见 [CloudRobo 配置软件环境](https://support.huaweicloud.com/sdkreference-cloudrobo/cloudrobo_03_0002.html)；非交互参数见 [Miniforge 官方说明](https://github.com/conda-forge/miniforge#unix-like-platforms-macos-linux--wsl)。
 
 ### Step 2：创建 `lerobot061`
 
@@ -56,11 +63,16 @@ source "$HOME/miniforge3/etc/profile.d/conda.sh"
 命令：
 
 ```bash
+conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge/
+conda config --set show_channel_urls yes
+conda config --remove channels conda-forge || true
+conda clean -i
+conda config --show channels
 conda create -y -n lerobot061 python=3.12
 conda activate lerobot061
 ```
 
-预期结果：环境创建成功，环境名为 `lerobot061`。
+预期结果：channels 中包含清华 conda-forge 镜像，环境创建成功，环境名为 `lerobot061`。
 
 验证命令：
 
@@ -79,7 +91,7 @@ python -V
 命令：
 
 ```bash
-conda install -y -n lerobot061 -c conda-forge ffmpeg
+conda install -y -n lerobot061 ffmpeg
 conda activate lerobot061
 ```
 
@@ -101,6 +113,8 @@ ffmpeg -version
 
 ```bash
 conda activate lerobot061
+pip config set global.index-url https://repo.huaweicloud.com/repository/pypi/simple
+pip config set global.trusted-host repo.huaweicloud.com
 python -m pip install lerobot==0.6.1
 ```
 
@@ -114,7 +128,7 @@ python -c "import lerobot; print(lerobot.__version__)"
 
 预期输出：`0.6.1`。
 
-来源：[华为 A1Z 专用文档](https://support.huaweicloud.com/sdkreference-cloudrobo/cloudrobo_03_0042.html)。不要使用通用页中针对旧流程的 0.5.1。
+来源：[华为 A1Z 专用文档](https://support.huaweicloud.com/sdkreference-cloudrobo/cloudrobo_03_0042.html)；pip 镜像配置见 [CloudRobo 配置软件环境](https://support.huaweicloud.com/sdkreference-cloudrobo/cloudrobo_03_0002.html)。不要使用通用页中针对旧流程的 0.5.1。
 
 ### Step 5：获取并安装 A1Z SDK
 

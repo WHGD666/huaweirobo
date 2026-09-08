@@ -4,18 +4,25 @@
 
 ## 1. Miniforge
 
-来源：华为 A1Z 专用文档引用的 Miniforge 最新 Linux 安装器；安装器命名和非交互参数依据 Miniforge 官方说明。
+来源：华为 A1Z 专用文档明确提供的清华 Miniforge Linux 安装器；非交互参数依据 Miniforge 官方说明。
+
+```bash
+wget "https://mirrors.tuna.tsinghua.edu.cn/github-release/conda-forge/miniforge/LatestRelease/Miniforge3-Linux-x86_64.sh"
+bash Miniforge3-Linux-x86_64.sh
+source ~/.bashrc
+```
+
+如果清华镜像下载失败，才回退到 Miniforge 官方 GitHub LatestRelease 地址：
 
 ```bash
 wget "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh"
 bash Miniforge3-$(uname)-$(uname -m).sh
-source ~/.bashrc
 ```
 
-自动化脚本使用同一官方 URL，并采用官方 Miniforge 的非交互形式：
+自动化脚本默认使用上述清华镜像，并在镜像失败时回退到 GitHub；安装仍采用官方 Miniforge 的非交互形式：
 
 ```bash
-bash Miniforge3-$(uname)-$(uname -m).sh -b -p "$HOME/miniforge3"
+bash Miniforge3-Linux-x86_64.sh -b -p "$HOME/miniforge3"
 source "$HOME/miniforge3/etc/profile.d/conda.sh"
 ```
 
@@ -23,7 +30,17 @@ source "$HOME/miniforge3/etc/profile.d/conda.sh"
 
 ## 2. Conda 环境
 
-来源：华为 A1Z 专用文档。
+来源：华为 A1Z 专用文档；清华 conda-forge 镜像配置来自华为 CloudRobo 配置软件环境文档。
+
+```bash
+conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge/
+conda config --set show_channel_urls yes
+conda config --remove channels conda-forge || true
+conda clean -i
+conda config --show channels
+```
+
+预期：channels 中包含 `https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge/`。移除默认国外 `conda-forge` 是华为文档标注的可选推荐操作。
 
 ```bash
 conda create -y -n lerobot061 python=3.12
@@ -38,7 +55,7 @@ python -V
 来源：华为 CloudRobo 环境文档的 Linux 安装步骤，通道为 conda-forge。
 
 ```bash
-conda install -y -n lerobot061 -c conda-forge ffmpeg
+conda install -y -n lerobot061 ffmpeg
 conda activate lerobot061
 ffmpeg -version
 ```
@@ -51,11 +68,13 @@ ffmpeg -version
 
 ```bash
 conda activate lerobot061
+pip config set global.index-url https://repo.huaweicloud.com/repository/pypi/simple
+pip config set global.trusted-host repo.huaweicloud.com
 python -m pip install lerobot==0.6.1
 python -c "import lerobot; print(lerobot.__version__)"
 ```
 
-预期：输出 `0.6.1`。本项目不采用通用 CloudRobo 文档中的 LeRobot 0.5.1，因为它适用于另一套旧环境说明。
+预期：pip 使用华为云 PyPI 镜像，输出 `0.6.1`。本项目不采用通用 CloudRobo 文档中的 LeRobot 0.5.1，因为它适用于另一套旧环境说明。
 
 ## 5. GALAXEA-A1Z SDK
 

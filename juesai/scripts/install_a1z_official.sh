@@ -11,7 +11,11 @@ readonly MINIFORGE_DIR="${MINIFORGE_DIR:-$HOME/miniforge3}"
 readonly WORKSPACE="${A1Z_WORKSPACE:-$HOME/a1z-workspace}"
 readonly DOWNLOAD_DIR="${A1Z_DOWNLOAD_DIR:-$WORKSPACE/downloads}"
 readonly MINIFORGE_INSTALLER="Miniforge3-$(uname)-$(uname -m).sh"
-readonly MINIFORGE_URL="https://github.com/conda-forge/miniforge/releases/latest/download/$MINIFORGE_INSTALLER"
+readonly MINIFORGE_MIRROR_URL="https://mirrors.tuna.tsinghua.edu.cn/github-release/conda-forge/miniforge/LatestRelease/Miniforge3-Linux-x86_64.sh"
+readonly MINIFORGE_GITHUB_URL="https://github.com/conda-forge/miniforge/releases/latest/download/$MINIFORGE_INSTALLER"
+readonly CONDA_FORGE_MIRROR_URL="https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge/"
+readonly PYPI_MIRROR_URL="https://repo.huaweicloud.com/repository/pypi/simple"
+readonly PYPI_MIRROR_HOST="repo.huaweicloud.com"
 readonly A1Z_URL="https://github.com/userguide-galaxea/GALAXEA-A1Z.git"
 readonly A1Z_BRANCH="gripper"
 readonly TELEOP_URL="https://github.com/suhanwu/a1z-teleop.git"
@@ -55,15 +59,28 @@ install_miniforge() {
   [[ ! -e "$MINIFORGE_DIR" ]] || die "Miniforge 目标存在但不可用: $MINIFORGE_DIR"
   mkdir -p "$DOWNLOAD_DIR"
   local installer="$DOWNLOAD_DIR/$MINIFORGE_INSTALLER"
-  log "download official Miniforge installer: $MINIFORGE_URL"
-  wget -O "$installer" "$MINIFORGE_URL"
+  log "download Miniforge from Huawei-documented Tsinghua mirror: $MINIFORGE_MIRROR_URL"
+  if ! wget -O "$installer" "$MINIFORGE_MIRROR_URL"; then
+    log "Tsinghua mirror failed; fallback to official GitHub LatestRelease: $MINIFORGE_GITHUB_URL"
+    wget -O "$installer" "$MINIFORGE_GITHUB_URL"
+  fi
   log "install Miniforge to $MINIFORGE_DIR"
   bash "$installer" -b -p "$MINIFORGE_DIR"
+}
+
+configure_conda_mirror() {
+  # Huawei's documented Tsinghua conda-forge mirror. Keep the foreign
+  # conda-forge entry out of the default channel list for this workflow.
+  conda config --add channels "$CONDA_FORGE_MIRROR_URL"
+  conda config --set show_channel_urls yes
+  conda config --remove channels conda-forge >/dev/null 2>&1 || true
+  conda clean -i -y
 }
 
 ensure_environment() {
   # shellcheck disable=SC1090
   source "$MINIFORGE_DIR/etc/profile.d/conda.sh"
+  configure_conda_mirror
   if conda env list | awk '{print $1}' | grep -Fxq "$ENV_NAME"; then
     local python_version
     python_version="$(conda run --no-capture-output -n "$ENV_NAME" python --version 2>&1)"
@@ -72,8 +89,10 @@ ensure_environment() {
   else
     conda create -y -n "$ENV_NAME" python=3.12
   fi
-  conda install -y -n "$ENV_NAME" -c conda-forge ffmpeg
+  conda install -y -n "$ENV_NAME" ffmpeg
   conda activate "$ENV_NAME"
+  python -m pip config set global.index-url "$PYPI_MIRROR_URL"
+  python -m pip config set global.trusted-host "$PYPI_MIRROR_HOST"
   local installed_lerobot
   installed_lerobot="$(python -c 'import importlib.metadata as m; print(m.version("lerobot"))' 2>/dev/null || true)"
   if [[ -n "$installed_lerobot" && "$installed_lerobot" != 0.6.1 ]]; then
