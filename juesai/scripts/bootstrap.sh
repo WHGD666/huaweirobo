@@ -37,8 +37,17 @@ check_host() {
     22.04|24.04) ;;
     *) die "A1Z 官方页面支持 Ubuntu 22.04/24.04，当前为 ${VERSION_ID:-unknown}" ;;
   esac
-  log "host: Ubuntu ${VERSION_ID}, kernel $(uname -r), system Python $(python3 --version 2>&1 || true)"
-  if [[ "$(uname -r)" != *-azure* && "$(uname -r)" != *-generic* ]]; then
+  local kernel_release kernel_version kernel_major kernel_minor
+  kernel_release="$(uname -r)"
+  kernel_version="${kernel_release%%-*}"
+  IFS=. read -r kernel_major kernel_minor _ <<< "$kernel_version"
+  kernel_major="${kernel_major:-0}"
+  kernel_minor="${kernel_minor:-0}"
+  log "host: Ubuntu ${VERSION_ID}, kernel ${kernel_release}, system Python $(python3 --version 2>&1 || true)"
+  if (( kernel_major < 6 || (kernel_major == 6 && kernel_minor < 8) )); then
+    log 'WARN: kernel is below the official 6.8 SocketCAN baseline; software bootstrap may continue, but real A1Z CAN use requires kernel confirmation/upgrades'
+  fi
+  if [[ "$kernel_release" != *-azure* && "$kernel_release" != *-generic* ]]; then
     log "WARN: 当前内核后缀不是常见 Ubuntu generic/azure，真机 SocketCAN 需另行确认"
   fi
   local free_kb free_gb

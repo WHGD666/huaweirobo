@@ -37,7 +37,16 @@ else
   fail 'cannot read /etc/os-release'
 fi
 
-pass "kernel: $(uname -r)"
+kernel_release="$(uname -r)"
+kernel_version="${kernel_release%%-*}"
+IFS=. read -r kernel_major kernel_minor _ <<< "$kernel_version"
+kernel_major="${kernel_major:-0}"
+kernel_minor="${kernel_minor:-0}"
+if (( kernel_major < 6 || (kernel_major == 6 && kernel_minor < 8) )); then
+  warn "kernel ${kernel_release} is below the official 6.8 SocketCAN baseline; real A1Z CAN use is not verified"
+else
+  pass "kernel ${kernel_release} meets the 6.8 SocketCAN baseline"
+fi
 if command -v nvidia-smi >/dev/null 2>&1; then
   nvidia-smi --query-gpu=name,driver_version,memory.total --format=csv,noheader && pass 'nvidia-smi query succeeded' || warn 'nvidia-smi exists but query failed'
 else

@@ -6,6 +6,7 @@
 - A1Z `gripper` 分支和 `a1z-teleop` 的可用 commit 已固定，bootstrap 不跟随未知的未来 HEAD。
 - P4 只承担临时 Linux 执行和小规模验证；系统 Python 3.10 不被替换。
 - 安装脚本不执行任何 CAN 或真实机器人操作，外部 checkout 不进入 Git。
+- 当前免费 P4 实测为 Ubuntu 22.04、Python 3.10、Tesla P4、驱动 550.54.15、内核 5.19；软件安装可以继续，但低于官方 6.8 SocketCAN 真机基线。
 
 ## 需要后续人工确认
 
