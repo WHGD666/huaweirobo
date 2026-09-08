@@ -1,0 +1,24 @@
+# Local environments and external source checkouts
+.conda/
+.venv/
+.external/
+external/
+
+# Local data, checkpoints, logs and generated artifacts
+data/
+datasets/
+checkpoints/
+outputs/
+runs/
+logs/
+*.jsonl
+*.tar.gz
+*.whl
+
+# Credentials and machine-specific configuration
+.env
+.env.*
+*.pem
+*.key
+credentials/
+config.local.*
