@@ -89,7 +89,13 @@ prepare_repo() {
     die "外部目标存在但不是 Git 仓库: $dest"
   fi
   if [[ -d "$dest/.git" ]]; then
-    [[ -z "$(git -C "$dest" status --porcelain)" ]] || die "外部仓库有未提交修改，未覆盖: $dest"
+    while IFS= read -r status_line; do
+      local status_path="${status_line:3}"
+      case "$status_path" in
+        */__pycache__/*|*.pyc) ;;
+        *) die "外部仓库有非构建产物修改，未覆盖: $dest ($status_path)" ;;
+      esac
+    done < <(git -C "$dest" status --porcelain)
     git -C "$dest" fetch --quiet origin "$branch"
   else
     mkdir -p "$(dirname -- "$dest")"
