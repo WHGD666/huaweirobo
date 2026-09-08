@@ -68,8 +68,8 @@
 
 ## 9. CloudRobo 上位机硬件要求
 
-- 来源：华为云 CloudRobo SDK 参考，“接入机器人”中的准备硬件设备要求。
-- URL：<https://support.huaweicloud.com/sdkreference-cloudrobo/cloudrobo_03_0003.html>
+- 来源：华为云 CloudRobo SDK 参考，“准备硬件设备”。
+- URL：<https://support.huaweicloud.com/sdkreference-cloudrobo/cloudrobo_03_0001.html>
 - 使用内容：CPU、内存、硬盘、USB 和本机推理 GPU 的最低/推荐规格；对应 `A1Z_ENV_AUDIT.md`。
 
 ## 10. 真机步骤来源
