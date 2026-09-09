@@ -1,0 +1,47 @@
+# A1Z 上位机环境信息 v1.0
+# 采集时间: 2026-09-09 (UTC+8, 21:1x)
+# 采集方式: 实际执行命令, 非手写
+
+## 系统
+uname -a:
+  Linux car-virtual-machine 6.8.0-138-generic #138~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC Fri Aug  7 13:43:15 UTC  x86_64 x86_64 x86_64 GNU/Linux
+uname -r:
+  6.8.0-138-generic
+lsb_release -a:
+  Distributor ID: Ubuntu
+  Description:    Ubuntu 22.04.5 LTS
+  Release:        22.04
+  Codename:       jammy
+架构: x86_64
+
+# 运行环境 = VMware 虚拟机 (Ubuntu 22.04)
+# 本机角色: 上位机 / 数据采集桥梁 / R2C 通信节点 (非训练服务器)
+
+## Miniforge / Conda
+- Miniforge 安装目录: ~/miniforge3
+- conda 版本: conda 26.5.3
+
+## Conda 环境
+conda env list:
+  base        /home/car/miniforge3
+  lerobot061  /home/car/miniforge3/envs/lerobot061   (标准使用环境)
+
+## Python
+- python: /home/car/miniforge3/envs/lerobot061/bin/python  -> python3.12
+- python --version: Python 3.12.14
+
+## 关键 Python 包
+- lerobot: 0.6.1
+- hw-r2c-sdk: 0.1.90  (pip freeze: -e /home/car/a1z-workspace/r2c_sdk_0.1.90/r2c_sdk_python)
+- torch: 2.11.0+cu130
+  - torch.version.cuda: 13.0
+  - torch.cuda.is_available(): False  (VMware VM 无 GPU, 属预期, 不尝试修复)
+
+## R2C SDK 导入验证 (实际执行, PASS)
+from r2c_sdk import ClientConfig, SyncRobotClient
+- ClientConfig:    <class 'r2c_sdk.common.config.ClientConfig'>
+- SyncRobotClient: <class 'r2c_sdk.sync_client.SyncRobotClient'>
+
+# 说明
+- VMware 内无 GPU/CUDA runtime 是上位机的正常状态; 本机不承担本地训练/推理。
+- 严禁在本机尝试修复 CUDA、降级/修改 Torch、安装 CUDA、改 GPU 驱动。

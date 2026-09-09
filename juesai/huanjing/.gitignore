@@ -1,0 +1,48 @@
+# ===== A1Z/R2C 敏感文件保护 (最高优先级) =====
+# CloudRobo 机器人凭证包: 证书/私钥/密码所在(单独拉出的 zip 规则, 不误伤普通 zip)
+cert_config_*
+cert_config_*.zip
+*credential*
+*credential*.zip
+*private_key*
+secrets/
+credentials/
+
+# 密钥与证书文件
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# 开发/测试用口令与 token
+.env
+.env.*
+*.token
+# token 可能出现在文件名或内容; .gitignore 不能拦内容, 内容扫描见 README "安全注意事项"
+
+# ===== 体积/二进制: 防止误提交大文件 =====
+*.tar.gz
+*.whl
+*.deb
+*.img
+*.iso
+*.h5
+*.pt
+*.pth
+*.onnx
+*.npz
+datasets/
+data/
+checkpoints/
+weights/
+models.bin
+
+# ===== Python 缓存 =====
+__pycache__/
+*.py[cod]
+#.ipynb_checkpoints/
+
+# ===== 本机特定 =====
+*.local
+config.local.*
