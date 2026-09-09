@@ -224,16 +224,11 @@ git rev-parse HEAD
 
 ```bash
 export R2C_SDK_PATH="/用户明确指定的/r2c_sdk_python"
-bash juesai/scripts/install_r2c_official.sh
+bash scripts/install_r2c_official.sh
+bash scripts/verify_env.sh
 ```
 
 预期结果：脚本检查 `lerobot061`、Python 3.12 和 LeRobot 0.6.1，并在用户指定的 SDK 源码目录中执行官方方式 `pip install -e .`；版本以控制台实际下载的官方包内容为准。
-
-验证命令：
-
-```bash
-bash juesai/scripts/verify_env.sh
-```
 
 R2C API 验证至少应成功导入：
 

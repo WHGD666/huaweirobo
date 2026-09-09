@@ -143,7 +143,7 @@ git log -1 --format='%H %s'
 
 ## 8. hw-r2c-sdk
 
-来源：华为 CloudRobo 控制台和 A1Z 专用文档。
+来源：[华为 A1Z 专用文档](https://support.huaweicloud.com/sdkreference-cloudrobo/cloudrobo_03_0042.html) 和 CloudRobo 控制台。
 
 1. 登录 CloudRobo 控制台。
 2. 进入“运行管理 > 机器人”。
@@ -155,7 +155,8 @@ git log -1 --format='%H %s'
 
 ```bash
 export R2C_SDK_PATH="/实际解压后的/r2c_sdk_python"
-bash juesai/scripts/install_r2c_official.sh
+bash scripts/install_r2c_official.sh
+bash scripts/verify_env.sh
 ```
 
 脚本会检查 `lerobot061`、Python 3.12 和 LeRobot 0.6.1，然后在 SDK 源码目录执行官方方式 `pip install -e .`，最后验证：
