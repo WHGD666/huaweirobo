@@ -48,13 +48,13 @@ lsusb -t
 ## 7. 查看 CAN(只读/状态)
 ```bash
 # 列出网络接口 (只读, 不进行任何使能/初始化操作)
-ip link                      # 或 ip -br link
-# CAN 状态 (仅查询, 不 setup; 不新增 enable/bitrate/控制命令)
-# 实际接口名必须 < 现场设备识别结果 或 setup_follower_can.sh 实际输出 > 为准, 不默认 can0
-CAN_IF=<实际CAN接口>
+ip -br link
+# CAN 状态 (只读查询): 现场交互输入实际接口名, 不默认 can0
+read -rp "请输入实际 CAN 接口名: " CAN_IF
 ip -details link show "$CAN_IF"
 ```
-> 说明: 只做状态/只读查询。不要在此运行任何会使能/初始化的命令。
+> 说明: 只做状态/只读查询, 不执行 enable/bitrate/加载或绑定/任何控制机械臂的命令。
+> 实际 CAN interface 名以现场设备识别结果或 `setup_follower_can.sh` 输出为准 (不默认 can0)。
 
 ## 8. 查看 Camera
 ```bash
@@ -80,8 +80,9 @@ git pull --ff-only
 
 ## 12. 环境备份(制作新基线)
 ```bash
-# 注意: 下面用 conda run 显式指定 lerobot061, 避免当前 shell 未激活该环境时导出错误环境
-conda list -n lerobot061 --explicit   > conda-list-<TAG>.txt
-conda run -n lerobot061 python -m pip freeze > pip-freeze-<TAG>.txt
+# 自动生成带时间戳的 TAG; 显式用 -n lerobot061, 不依赖当前 shell 是否激活该环境
+TAG=$(date +%Y%m%d-%H%M%S)
+conda list -n lerobot061 --explicit   > "conda-list-${TAG}.txt"
+conda run -n lerobot061 python -m pip freeze > "pip-freeze-${TAG}.txt"
 ```
-> 注意: 这是**导出**命令, 生成副本, 不删除也不替换现有环境。
+> 注意: 这是**导出**命令, 生成副本, 不删除也不替换现有环境; 文件名自动带时间戳, 不会覆盖旧文件。
