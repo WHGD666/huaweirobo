@@ -62,9 +62,11 @@
 
 - 来源：CloudRobo 控制台“运行管理 > 机器人 > R2C SDK 软件包”，配合华为官方环境文档。
 - 版本：最新官方包；不固定通用文档中的示例版本，不记录猜测 URL。
-- 命令：用户下载后执行 `tar -zxvf hw_r2c_sdk-<官方版本>.tar.gz`、进入实际 `r2c_sdk_python` 目录、`python -m pip install -e .`、`import r2c_sdk` 验证。
-- 脚本行为：只有显式提供 `R2C_SDK_PATH` 才安装；否则输出 `MANUAL STEP REQUIRED`。
-- 对应文件：`A1Z_DOWNLOAD_CHECKLIST.md`、`A1Z_INSTALL_GUIDE.md`、`scripts/install_a1z_official.sh`、`scripts/verify_env.sh`。
+- 安装前提：用户按控制台实际文件名手工下载并解压，显式提供实际源码目录；不固定压缩包文件名，不猜测下载 URL。
+- 命令：在已有 `lerobot061` / Python 3.12 环境中执行 `R2C_SDK_PATH=/实际路径 bash scripts/install_r2c_official.sh`；脚本在 SDK 目录执行官方方式 `python -m pip install -e .`。
+- 官方验证：`from r2c_sdk import ClientConfig, SyncRobotClient`；当前 `scripts/verify_env.sh` 也执行相同 API 检查。
+- 脚本行为：只有显式提供 `R2C_SDK_PATH` 才安装；否则失败并提示 `MANUAL STEP REQUIRED`。不执行任何 CAN、机器人、相机、UART 或真机动作。
+- 对应文件：`A1Z_DOWNLOAD_CHECKLIST.md`、`A1Z_INSTALL_GUIDE.md`、`scripts/install_a1z_official.sh`、`scripts/install_r2c_official.sh`、`scripts/verify_env.sh`。
 
 ## 9. CloudRobo 上位机硬件要求
 

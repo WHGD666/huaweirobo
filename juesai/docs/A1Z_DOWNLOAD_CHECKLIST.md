@@ -148,19 +148,23 @@ git log -1 --format='%H %s'
 1. 登录 CloudRobo 控制台。
 2. 进入“运行管理 > 机器人”。
 3. 使用右上角“R2C SDK 软件包”下载最新官方包。
-4. 将压缩包放入工作目录；不要从 GitHub、PyPI 或猜测的 URL 获取替代包。
+4. 由用户按控制台实际文件名手工解压；不要从 GitHub、PyPI 或猜测的 URL 获取替代包，也不要在项目中固定版本号或压缩包文件名。
+5. 确认解压后的实际 SDK 源码目录中存在 `pyproject.toml` 或 `setup.py`。
 
-官方示例命令（文件名和目录以控制台实际下载内容为准）：
+在现有 `lerobot061` / Python 3.12 环境中运行独立安装脚本：
 
 ```bash
-tar -zxvf hw_r2c_sdk-<官方版本>.tar.gz
-cd r2c_sdk_python
-conda activate lerobot061
-python -m pip install -e .
-python -c "import r2c_sdk; print(getattr(r2c_sdk, '__version__', 'unknown'))"
+export R2C_SDK_PATH="/实际解压后的/r2c_sdk_python"
+bash juesai/scripts/install_r2c_official.sh
 ```
 
-当前状态：`MANUAL STEP REQUIRED`。本项目不固定示例版本，不猜下载地址。自动脚本只有在用户显式提供 `R2C_SDK_PATH` 时才执行本地 editable install。
+脚本会检查 `lerobot061`、Python 3.12 和 LeRobot 0.6.1，然后在 SDK 源码目录执行官方方式 `pip install -e .`，最后验证：
+
+```python
+from r2c_sdk import ClientConfig, SyncRobotClient
+```
+
+当前状态：`MANUAL STEP REQUIRED`。下载、解压和 `R2C_SDK_PATH` 路径必须由用户根据控制台实际内容提供。脚本不猜测下载地址、版本号或文件名，不执行任何 CAN、机器人、相机、UART 或真机动作。
 
 ## 9. 真机阶段依赖（只记录，不执行）
 

@@ -214,22 +214,34 @@ git rev-parse HEAD
 
 目的：安装 CloudRobo 控制台为当前项目提供的最新 R2C SDK。
 
-命令：先在 CloudRobo 控制台“运行管理 > 机器人 > R2C SDK 软件包”下载，再由用户将解压目录显式传入：
+操作：
+
+1. 在 CloudRobo 控制台进入“运行管理 > 机器人 > R2C SDK 软件包”，下载最新官方包。
+2. 按控制台显示的实际文件名手工解压，不从 GitHub、PyPI 或猜测的 URL 获取替代包。
+3. 找到实际解压后的 `r2c_sdk_python` 源码目录，并确认其中存在 `pyproject.toml` 或 `setup.py`。
+
+命令：在现有 `lerobot061` / Python 3.12 环境中，将实际目录显式传给独立脚本：
 
 ```bash
 export R2C_SDK_PATH="/用户明确指定的/r2c_sdk_python"
-python -m pip install -e "$R2C_SDK_PATH"
+bash juesai/scripts/install_r2c_official.sh
 ```
 
-预期结果：用户指定目录被 editable install；版本以官方包实际内容为准。
+预期结果：脚本检查 `lerobot061`、Python 3.12 和 LeRobot 0.6.1，并在用户指定的 SDK 源码目录中执行官方方式 `pip install -e .`；版本以控制台实际下载的官方包内容为准。
 
 验证命令：
 
 ```bash
-python -c "import r2c_sdk; print(getattr(r2c_sdk, '__version__', 'unknown'))"
+bash juesai/scripts/verify_env.sh
 ```
 
-来源：[华为 CloudRobo 通用环境文档](https://support.huaweicloud.com/sdkreference-cloudrobo/cloudrobo_03_0002.html) 与 [A1Z 专用文档](https://support.huaweicloud.com/sdkreference-cloudrobo/cloudrobo_03_0042.html)。状态：`MANUAL STEP REQUIRED`。不猜测包名、版本或下载 URL。
+R2C API 验证至少应成功导入：
+
+```bash
+python -c "from r2c_sdk import ClientConfig, SyncRobotClient; print('r2c_sdk OK')"
+```
+
+来源：[华为 CloudRobo 通用环境文档](https://support.huaweicloud.com/sdkreference-cloudrobo/cloudrobo_03_0002.html) 与 [A1Z 专用文档](https://support.huaweicloud.com/sdkreference-cloudrobo/cloudrobo_03_0042.html)。状态：`MANUAL STEP REQUIRED`。不猜测包名、版本、下载 URL 或压缩包文件名。该脚本只进行软件安装和 API 验证，不连接硬件。
 
 ## B. 必须到现场有硬件后再执行
 
