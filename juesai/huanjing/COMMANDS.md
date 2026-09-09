@@ -49,8 +49,10 @@ lsusb -t
 ```bash
 # 列出网络接口 (只读, 不进行任何使能/初始化操作)
 ip link                      # 或 ip -br link
-# CAN 状态 (若 cangetdevice 存在; 仅查询, 不 setup)
-ip -details link show can0   # 仅示例; 现场接口名以 setup_follower_can.sh 实际输出为准, 不默认 can0
+# CAN 状态 (仅查询, 不 setup; 不新增 enable/bitrate/控制命令)
+# 实际接口名必须 < 现场设备识别结果 或 setup_follower_can.sh 实际输出 > 为准, 不默认 can0
+CAN_IF=<实际CAN接口>
+ip -details link show "$CAN_IF"
 ```
 > 说明: 只做状态/只读查询。不要在此运行任何会使能/初始化的命令。
 
@@ -78,7 +80,8 @@ git pull --ff-only
 
 ## 12. 环境备份(制作新基线)
 ```bash
-conda list -n lerobot061 --explicit > conda-list-<TAG>.txt
-pip freeze > pip-freeze-<TAG>.txt
+# 注意: 下面用 conda run 显式指定 lerobot061, 避免当前 shell 未激活该环境时导出错误环境
+conda list -n lerobot061 --explicit   > conda-list-<TAG>.txt
+conda run -n lerobot061 python -m pip freeze > pip-freeze-<TAG>.txt
 ```
 > 注意: 这是**导出**命令, 生成副本, 不删除也不替换现有环境。

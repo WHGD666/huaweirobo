@@ -1,7 +1,9 @@
 # ===== A1Z/R2C 敏感文件保护 (最高优先级) =====
-# CloudRobo 机器人凭证包: 证书/私钥/密码所在
+# CloudRobo 机器人凭证包: 证书/私钥/密码所在(单独拉出的 zip 规则, 不误伤普通 zip)
 cert_config_*
+cert_config_*.zip
 *credential*
+*credential*.zip
 *private_key*
 secrets/
 credentials/
@@ -21,7 +23,6 @@ credentials/
 
 # ===== 体积/二进制: 防止误提交大文件 =====
 *.tar.gz
-*.zip
 *.whl
 *.deb
 *.img

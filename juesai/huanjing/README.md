@@ -40,6 +40,12 @@ Star Arm 遥操作    →      (观测上行 / R2C action)  →      R2C action 
 > 比赛方已通知未来将使用 `release/safety-port-202608`, 但配套文件仍在更新,
 > **绝对不要现在切换 branch / 升级 A1Z / 重装环境**。详见本文档第 6 节。
 
+> 📌 **Python 版本说明**
+> - 上表 Python = **3.12.14** 是本机**黄金基线实测**。
+> - 恢复脚本实际用的是 `conda create ... python=3.12` → 约束为 **Python 3.12.x**, 并不严格 pin 到 3.12.14。
+> - 因此换机器重建后, patch 版本(3.12.14/3.12.15/…)可能不同, **这属正常**。
+> - 切勿因为脚本创建的是 3.12.x 而擅自升级/降级当前已验证环境。
+
 ---
 
 ## 3. Conda 使用
@@ -149,7 +155,7 @@ python -c 'import r2c_sdk; from r2c_sdk import ClientConfig, SyncRobotClient; pr
 
 1. 安装 Ubuntu 22.04
 2. 检查 kernel ≥ 官方要求(`docs/A1Z_ENV_AUDIT.md` / `docs/A1Z_INSTALL_GUIDE.md`)
-3. 安装 Miniforge → `scripts/install_a1z_official.sh`(会创建 env `lerobot061`, Python 3.12.14, LeRobot 0.6.1)
+3. 安装 Miniforge → `scripts/install_a1z_official.sh`(会创建 env `lerobot061`: 脚本约束 Python **3.12.x**, 本机实测为 3.12.14; 并装 LeRobot 0.6.1)
 4. 安装 GALAXEA-A1Z(由 install_a1z_official.sh 拉取 gripper 分支)
 5. 安装 a1z-teleop 插件(由 install_a1z_official.sh 拉取 main)
 6. 安装 R2C SDK → `scripts/install_r2c_official.sh`(需先手动获得官方包)
