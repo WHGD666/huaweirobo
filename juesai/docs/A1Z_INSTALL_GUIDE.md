@@ -132,31 +132,43 @@ python -c "import lerobot; print(lerobot.__version__)"
 
 ### Step 5：获取并安装 A1Z SDK
 
-目的：使用带 G1Z 夹爪支持的官方 `gripper` 分支。
+目的：仅升级 GALAXEA-A1Z SDK 到指定官方候选 commit；Ubuntu、Python 3.12、LeRobot 0.6.1、R2C SDK、a1z-teleop、robot mapping 和数据结构均保持不变。
+
+旧稳定基线：`gripper` / `e931ecd0e25ad35df251097ba42921b3d2fa7224`。
+
+本次迁移目标：`feat/cross-platform-g1z-fixes` / `366e523ab4e4331efd2337f302ce48e559e89194`。
+
+```text
+Repository: https://github.com/userguide-galaxea/GALAXEA-A1Z
+Branch: feat/cross-platform-g1z-fixes
+Commit: 366e523ab4e4331efd2337f302ce48e559e89194
+```
 
 命令：
 
 ```bash
 mkdir -p "$HOME/a1z-workspace"
 cd "$HOME/a1z-workspace"
-git clone --branch gripper --single-branch \
+git clone --branch feat/cross-platform-g1z-fixes --single-branch \
   https://github.com/userguide-galaxea/GALAXEA-A1Z.git \
   GALAXEA-A1Z
 cd GALAXEA-A1Z
+git checkout --detach 366e523ab4e4331efd2337f302ce48e559e89194
 python -m pip install -e .
 ```
 
-预期结果：A1Z SDK editable install 完成，源码分支为 `gripper`。
+预期结果：A1Z SDK editable install 完成，源码固定在目标 commit `366e523ab4e4331efd2337f302ce48e559e89194`。该步骤只改变 A1Z SDK，不改变其他环境组件。
 
 验证命令：
 
 ```bash
-git branch --show-current
 git rev-parse HEAD
 python -c "from a1z.robots.get_robot import get_a1z_robot; print(get_a1z_robot.__name__)"
 ```
 
-来源：[GALAXEA-A1Z gripper 分支](https://github.com/userguide-galaxea/GALAXEA-A1Z/tree/gripper)。
+预期输出：目标 SHA 为 `366e523ab4e4331efd2337f302ce48e559e89194`；由于使用固定 commit，`git branch --show-current` 为空属于预期。
+
+来源：[GALAXEA-A1Z 官方候选分支](https://github.com/userguide-galaxea/GALAXEA-A1Z/tree/feat/cross-platform-g1z-fixes)。
 
 ### Step 5.1：编译失败时补充官方依赖（条件性步骤）
 

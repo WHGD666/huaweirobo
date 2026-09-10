@@ -16,8 +16,9 @@ readonly MINIFORGE_GITHUB_URL="https://github.com/conda-forge/miniforge/releases
 readonly CONDA_FORGE_MIRROR_URL="https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge/"
 readonly PYPI_MIRROR_URL="https://repo.huaweicloud.com/repository/pypi/simple"
 readonly PYPI_MIRROR_HOST="repo.huaweicloud.com"
-readonly A1Z_URL="https://github.com/userguide-galaxea/GALAXEA-A1Z.git"
-readonly A1Z_BRANCH="gripper"
+readonly GALAXEA_A1Z_REPO="https://github.com/userguide-galaxea/GALAXEA-A1Z.git"
+readonly GALAXEA_A1Z_BRANCH="feat/cross-platform-g1z-fixes"
+readonly GALAXEA_A1Z_COMMIT="366e523ab4e4331efd2337f302ce48e559e89194"
 readonly TELEOP_URL="https://github.com/suhanwu/a1z-teleop.git"
 readonly TELEOP_BRANCH="main"
 
@@ -102,18 +103,26 @@ ensure_environment() {
 }
 
 prepare_repo() {
-  local url="$1" branch="$2" destination="$3"
+  local url="$1" branch="$2" destination="$3" expected_commit="${4:-}"
   if [[ -e "$destination" ]]; then
     [[ -d "$destination/.git" ]] || die "外部目标不是 Git 仓库: $destination"
-    local actual_branch actual_url
+    local actual_branch actual_url actual_commit
     actual_url="$(git -C "$destination" remote get-url origin)"
     [[ "$actual_url" == "$url" ]] || die "$destination origin 不匹配: $actual_url"
-    actual_branch="$(git -C "$destination" branch --show-current)"
-    [[ "$actual_branch" == "$branch" ]] || die "$destination 当前分支为 '$actual_branch'，期望 '$branch'；脚本不自动切换"
     [[ -z "$(git -C "$destination" status --porcelain)" ]] || die "$destination 有未提交修改；脚本不覆盖外部 checkout"
+    actual_branch="$(git -C "$destination" branch --show-current)"
+    if [[ -n "$expected_commit" ]]; then
+      actual_commit="$(git -C "$destination" rev-parse HEAD)"
+      [[ "$actual_commit" == "$expected_commit" ]] || die "$destination 当前 commit 为 '$actual_commit'，期望 '$expected_commit'；脚本不自动切换"
+    else
+      [[ "$actual_branch" == "$branch" ]] || die "$destination 当前分支为 '$actual_branch'，期望 '$branch'；脚本不自动切换"
+    fi
   else
     mkdir -p "$(dirname -- "$destination")"
     git clone --branch "$branch" --single-branch "$url" "$destination"
+    if [[ -n "$expected_commit" ]]; then
+      git -C "$destination" checkout --detach "$expected_commit"
+    fi
   fi
   log "source ready: $destination"
   git -C "$destination" remote get-url origin
@@ -157,7 +166,7 @@ main() {
   install_miniforge
   ensure_environment
   mkdir -p "$WORKSPACE"
-  prepare_repo "$A1Z_URL" "$A1Z_BRANCH" "$WORKSPACE/GALAXEA-A1Z"
+  prepare_repo "$GALAXEA_A1Z_REPO" "$GALAXEA_A1Z_BRANCH" "$WORKSPACE/GALAXEA-A1Z" "$GALAXEA_A1Z_COMMIT"
   prepare_repo "$TELEOP_URL" "$TELEOP_BRANCH" "$WORKSPACE/a1z-teleop"
   conda activate "$ENV_NAME"
   A1Z_SDK="$WORKSPACE/GALAXEA-A1Z" bash "$WORKSPACE/a1z-teleop/setup.sh"

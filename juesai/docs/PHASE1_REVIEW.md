@@ -9,6 +9,6 @@
 - [A1Z_INSTALL_GUIDE.md](A1Z_INSTALL_GUIDE.md)
 - [SOURCES.md](SOURCES.md)
 
-当前入口只面向 Ubuntu VM 的软件安装，目标为 Python 3.12、`lerobot061`、LeRobot 0.6.1、ffmpeg、A1Z `gripper` 分支和 a1z-teleop 插件。它不修改 CUDA/Torch/Driver/Kernel，不连接远程服务器，不执行任何真机命令。
+当前入口只面向 Ubuntu VM 的软件安装，目标为 Python 3.12、`lerobot061`、LeRobot 0.6.1、ffmpeg、A1Z 固定候选 commit `366e523ab4e4331efd2337f302ce48e559e89194` 和 a1z-teleop 插件。旧 `gripper` / `e931ecd0e25ad35df251097ba42921b3d2fa7224` 作为已验证基线保留记录。它不修改 CUDA/Torch/Driver/Kernel，不连接远程服务器，不执行任何真机命令。
 
 `scripts/bootstrap.sh` 仅作为兼容转发入口，实际执行 `scripts/install_a1z_official.sh`；新流程不再包含 P4、cu118 或 `TORCH_INDEX_URL` 自动分支。

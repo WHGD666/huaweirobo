@@ -9,7 +9,7 @@
 - 来源：华为云 CloudRobo SDK 参考，“星海图 A1Z”。
 - URL：<https://support.huaweicloud.com/sdkreference-cloudrobo/cloudrobo_03_0042.html>
 - 页面更新时间：2026-09-07 GMT+08:00。
-- 使用版本：Ubuntu 22.04/24.04、内核 `>=6.8.0-124`、Python 3.12、conda 环境 `lerobot061`、LeRobot 0.6.1、conda-forge ffmpeg、A1Z `gripper` 分支、最新 hw-r2c-sdk。
+- 使用版本：Ubuntu 22.04/24.04、内核 `>=6.8.0-124`、Python 3.12、conda 环境 `lerobot061`、LeRobot 0.6.1、conda-forge ffmpeg、A1Z 固定候选 commit `366e523ab4e4331efd2337f302ce48e559e89194`、最新 hw-r2c-sdk。
 - 使用命令：Miniforge 清华镜像下载（失败时回退官方 GitHub LatestRelease）；`conda create -y -n lerobot061 python=3.12`；配置清华 conda-forge 后执行 `conda install -n lerobot061 ffmpeg`；配置华为云 PyPI 镜像后执行 `pip install lerobot==0.6.1`；`A1Z_SDK=... bash setup.sh`；现场 SocketCAN/CAN/标定步骤。
 - 对应文件：`A1Z_ENV_AUDIT.md`、`A1Z_DOWNLOAD_CHECKLIST.md`、`A1Z_INSTALL_GUIDE.md`、`scripts/install_a1z_official.sh`、`scripts/verify_env.sh`。
 
@@ -24,9 +24,13 @@
 
 ## 3. GALAXEA-A1Z SDK
 
-- 来源：[userguide-galaxea/GALAXEA-A1Z](https://github.com/userguide-galaxea/GALAXEA-A1Z/tree/gripper)。
-- 版本依据：分支 `gripper`；运行时通过 `git rev-parse HEAD` 记录实际 SHA，不在本项目擅自固化未由当前官方页面要求的未来 commit。
-- 使用命令：`git clone --branch gripper --single-branch ...`；`python -m pip install -e .`；`git branch --show-current`；`git rev-parse HEAD`。
+- 来源：[userguide-galaxea/GALAXEA-A1Z 官方候选分支](https://github.com/userguide-galaxea/GALAXEA-A1Z/tree/feat/cross-platform-g1z-fixes)。
+- 版本依据：旧稳定基线为 `gripper` / `e931ecd0e25ad35df251097ba42921b3d2fa7224`；本次迁移固定为 `feat/cross-platform-g1z-fixes` / `366e523ab4e4331efd2337f302ce48e559e89194`。
+- Repository: `https://github.com/userguide-galaxea/GALAXEA-A1Z`
+- Branch: `feat/cross-platform-g1z-fixes`
+- Commit: `366e523ab4e4331efd2337f302ce48e559e89194`
+- 使用命令：`git clone --branch feat/cross-platform-g1z-fixes --single-branch ...`；`git checkout --detach 366e523ab4e4331efd2337f302ce48e559e89194`；`python -m pip install -e .`；`git rev-parse HEAD`。
+- 迁移边界：只替换 A1Z SDK；Ubuntu、Python 3.12、LeRobot 0.6.1、R2C SDK、a1z-teleop、robot mapping 和数据结构不变。安装脚本不自动切换已有非目标 checkout。
 - 对应文件：`A1Z_DOWNLOAD_CHECKLIST.md`、`A1Z_INSTALL_GUIDE.md`、`scripts/install_a1z_official.sh`、`scripts/verify_env.sh`。
 
 ## 4. a1z-teleop

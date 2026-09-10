@@ -78,22 +78,30 @@ python -c "import lerobot; print(lerobot.__version__)"
 
 ## 5. GALAXEA-A1Z SDK
 
-来源：[GALAXEA-A1Z 官方仓库的 `gripper` 分支](https://github.com/userguide-galaxea/GALAXEA-A1Z/tree/gripper)。
+本次安全迁移目标固定为官方候选分支的指定 commit。旧稳定基线为 `gripper` 分支 `e931ecd0e25ad35df251097ba42921b3d2fa7224`；新目标为 `feat/cross-platform-g1z-fixes` 分支 `366e523ab4e4331efd2337f302ce48e559e89194`。
+
+来源：[GALAXEA-A1Z 官方候选分支](https://github.com/userguide-galaxea/GALAXEA-A1Z/tree/feat/cross-platform-g1z-fixes)。
+
+```text
+Repository: https://github.com/userguide-galaxea/GALAXEA-A1Z
+Branch: feat/cross-platform-g1z-fixes
+Commit: 366e523ab4e4331efd2337f302ce48e559e89194
+```
 
 ```bash
 cd "$HOME/a1z-workspace"
-git clone --branch gripper --single-branch \
+git clone --branch feat/cross-platform-g1z-fixes --single-branch \
   https://github.com/userguide-galaxea/GALAXEA-A1Z.git \
   GALAXEA-A1Z
 cd GALAXEA-A1Z
+git checkout --detach 366e523ab4e4331efd2337f302ce48e559e89194
 conda activate lerobot061
 python -m pip install -e .
-git branch --show-current
 git rev-parse HEAD
 git log -1 --format='%H %s'
 ```
 
-预期：当前分支为 `gripper`；将 `git rev-parse HEAD` 输出记录到 VM 外部的版本记录中。不要在没有来源依据时把未来仓库 HEAD 擅自替换成其他 SHA。
+预期：A1Z SDK editable install 完成，`git rev-parse HEAD` 必须严格输出 `366e523ab4e4331efd2337f302ce48e559e89194`。checkout 使用 detached HEAD 是为了保证安装内容固定在目标 commit；不得使用 `latest`、`master` 或动态分支 HEAD。
 
 ### 官方条件性故障处理：编译失败时
 

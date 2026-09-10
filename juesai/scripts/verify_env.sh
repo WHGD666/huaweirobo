@@ -8,6 +8,8 @@ readonly ENV_NAME="${JUESAI_ENV_NAME:-lerobot061}"
 readonly MINIFORGE_DIR="${MINIFORGE_DIR:-$HOME/miniforge3}"
 readonly WORKSPACE="${A1Z_WORKSPACE:-$HOME/a1z-workspace}"
 readonly MIN_KERNEL="6.8.0-124"
+readonly GALAXEA_A1Z_BRANCH="feat/cross-platform-g1z-fixes"
+readonly GALAXEA_A1Z_COMMIT="366e523ab4e4331efd2337f302ce48e559e89194"
 
 failures=0
 manual_steps=0
@@ -89,6 +91,13 @@ check_conda_and_environment() {
 }
 
 check_python_packages() {
+  local a1z_version
+  a1z_version="$(run_env python -c 'import importlib.metadata as m; print(m.version("a1z"))' 2>&1 || true)"
+  if [[ "$a1z_version" != *No\ package\ metadata* && -n "$a1z_version" ]]; then
+    pass "A1Z package version (informational): $a1z_version"
+  else
+    warn "A1Z package metadata unavailable (commit check remains Git-based): $a1z_version"
+  fi
   local lerobot_version
   lerobot_version="$(run_env python -c 'import importlib.metadata as m; print(m.version("lerobot"))' 2>&1 || true)"
   [[ "$lerobot_version" == 0.6.1 ]] && pass "LeRobot version: $lerobot_version" || fail "LeRobot version mismatch: $lerobot_version"
@@ -142,6 +151,35 @@ print("stararm102_leader, galaxea_a1z_follower")
   fi
 }
 
+check_a1z_repo() {
+  local directory="$1"
+  if [[ ! -d "$directory/.git" ]]; then
+    fail "GALAXEA-A1Z checkout missing: $directory"
+    return 1
+  fi
+  local branch sha
+  branch="$(git -C "$directory" branch --show-current)"
+  sha="$(git -C "$directory" rev-parse HEAD)"
+  if [[ "$sha" == "$GALAXEA_A1Z_COMMIT" ]]; then
+    pass "GALAXEA-A1Z commit SHA: $sha (target)"
+  else
+    failures=$((failures + 1))
+    printf '[FAIL] GALAXEA-A1Z commit mismatch\n'
+    printf '       expected: %s\n' "$GALAXEA_A1Z_COMMIT"
+    printf '       actual:   %s\n' "$sha"
+  fi
+  if [[ "$branch" == "$GALAXEA_A1Z_BRANCH" ]]; then
+    pass "GALAXEA-A1Z branch: $branch"
+  elif [[ -z "$branch" && "$sha" == "$GALAXEA_A1Z_COMMIT" ]]; then
+    pass 'GALAXEA-A1Z checkout: detached HEAD at target commit'
+  elif [[ -n "$branch" ]]; then
+    warn "GALAXEA-A1Z branch '$branch' is not the target branch '$GALAXEA_A1Z_BRANCH'"
+  else
+    warn 'GALAXEA-A1Z branch is detached and commit is not the target'
+  fi
+  return 0
+}
+
 check_r2c() {
   local report
   report="$(run_env python -c 'import r2c_sdk; from r2c_sdk import ClientConfig, SyncRobotClient; print("version=" + getattr(r2c_sdk, "__version__", "unknown")); print("r2c_sdk_api_ok")' 2>&1 || true)"
@@ -185,7 +223,7 @@ main() {
     skip 'Python packages, plugins, r2c_sdk and Torch checks skipped because lerobot061 is unavailable'
   fi
 
-  check_git_repo 'GALAXEA-A1Z' "$WORKSPACE/GALAXEA-A1Z" gripper || true
+  check_a1z_repo "$WORKSPACE/GALAXEA-A1Z" || true
   check_git_repo 'a1z-teleop' "$WORKSPACE/a1z-teleop" main || true
   skip 'CAN/SocketCAN/gs_usb checks skipped: no hardware command is executed'
   skip 'A1Z/gripper checks skipped: no robot connection or motion is executed'
