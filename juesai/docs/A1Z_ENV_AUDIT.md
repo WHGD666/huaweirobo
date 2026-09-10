@@ -20,7 +20,7 @@
 | Conda 环境 | A1Z 专页使用 `lerobot061` | `lerobot061` | 必须保持一致 |
 | LeRobot | 0.6.1 | 0.6.1 | 必须保持一致 |
 | ffmpeg | conda-forge 版本 | conda-forge 版本 | 必须安装并验证 |
-| A1Z SDK | `GALAXEA-A1Z` 的 `gripper` 分支 | `gripper` 分支 | 必须验证分支和 SHA |
+| A1Z SDK | `GALAXEA-A1Z` 官方候选分支指定 commit | `feat/cross-platform-g1z-fixes` / `366e523ab4e4331efd2337f302ce48e559e89194` | 仅升级 A1Z SDK，必须验证 SHA |
 | a1z-teleop | 指定仓库，按其 `setup.sh` 安装插件 | 外部 checkout | 必须验证 SHA 和插件注册 |
 | hw-r2c-sdk | CloudRobo 控制台提供的最新官方包 | 用户手动提供路径 | `MANUAL STEP REQUIRED` |
 | GPU | 本机推理时需 8GB 以上显存 | VMware 当前无 GPU | SKIP，当前预演不作为强制项 |
@@ -30,6 +30,12 @@
 ## 2. 目标 VM 的正确定位
 
 目标 VM 的 `8 vCPU / 16GB RAM / 100GB` 配置可以用于 Phase 1 的软件安装预演、代码检查和无硬件验证，但不应写成“完全符合官方最终上位机配置”。其中 100GB 磁盘低于官方正式上位机的 1TB+ 要求；进入真机长期运行前，应准备符合该要求的上位机存储。
+
+## 2.1 A1Z SDK 安全迁移边界
+
+当前已验证基线为 `gripper` / `e931ecd0e25ad35df251097ba42921b3d2fa7224`。本次迁移目标为 `feat/cross-platform-g1z-fixes` / `366e523ab4e4331efd2337f302ce48e559e89194`。
+
+迁移只替换 GALAXEA-A1Z SDK checkout 和 editable install 内容；Ubuntu 22.04、Kernel、Python 3.12、`lerobot061`、LeRobot 0.6.1、R2C SDK、a1z-teleop、robot mapping 和数据结构均不改变。安装脚本对已有非目标 checkout 不自动切换或覆盖，必须先由人工确认。
 
 ## 3. 当前本地仓库状态
 
